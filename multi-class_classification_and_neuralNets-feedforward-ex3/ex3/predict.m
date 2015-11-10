@@ -21,13 +21,27 @@ p = zeros(size(X, 1), 1);
 %       can use max(A, [], 2) to obtain the max for each row.
 %
 
+% Add the bias elements in input need to be added
 
+X = resize(X,size(X, 1),size(X, 2)+1);
+X = circshift(X,[0,1]);
+X(:,1) = 1;
 
+% X has size 5000 x 401
+% Theta1 has size 25 x 401
+% Theta2 has size 10 x 26
 
+%Compute layer 1 size 5000 x 25
+A1 = sigmoid(X * Theta1');
 
+A1 = resize(A1,size(A1, 1),size(A1, 2)+1);
+A1 = circshift(A1,[0,1]);
+A1(:,1) = 1;
 
-
-
+%Compute layer 2 size 5000 x 10
+A2 = sigmoid(A1 * Theta2');
+[v,p] = max(A2'); 
+p=p';
 
 % =========================================================================
 
