@@ -24,7 +24,7 @@ Theta2 = reshape(nn_params((1 + (hidden_layer_size * (input_layer_size + 1))):en
 
 % Setup some useful variables
 m = size(X, 1);
-         
+n = size(X, 2);         
 % You need to return the following variables correctly 
 J = 0;
 Theta1_grad = zeros(size(Theta1));
@@ -39,6 +39,44 @@ Theta2_grad = zeros(size(Theta2));
 %         cost function computation is correct by verifying the cost
 %         computed in ex4.m
 %
+% Add the bias elements in input need to be added
+
+A1 = resize(X,m,n+1);
+A1 = circshift(A1,[0,1]);
+A1(:,1) = 1;
+
+% A1 has size 5000 x 401
+% Theta1 has size 25 x 401
+% Theta2 has size 10 x 26
+
+%Compute layer 1 size 5000 x 25
+A2 = sigmoid(A1 * Theta1');
+A2 = resize(A2,size(A2, 1),size(A2, 2)+1);
+A2 = circshift(A2,[0,1]);
+A2(:,1) = 1;
+
+%Compute layer 2 size 5000 x 10
+H = sigmoid(A2* Theta2');
+
+% y is of size 5000 x 1
+% Y is of size 5000 x 10
+Y = zeros(size(y(:,1)), max(y));
+for i = 1:size(y(:,1))
+    Y(i,y(i))=1;
+end
+
+%Compute cost J
+% j is of size 5000 x 10  
+j = (-1) * Y .* log(H) - (ones(size(Y)) - Y) .* log(ones(size(H)) - H);
+jk = j * ones(num_labels,1);
+
+J =( ones(1,m) * jk)/m;
+
+%Compute regularization factor
+r = (sum(sum(Theta1(:,2:size(Theta1,2)) .* Theta1(:,2:size(Theta1,2))))  + sum(sum(Theta2(:,2:size(Theta2,2)) .* Theta2(:,2:size(Theta2,2)))))*lambda/(2*m);
+
+J = J+r
+%============================================================
 % Part 2: Implement the backpropagation algorithm to compute the gradients
 %         Theta1_grad and Theta2_grad. You should return the partial derivatives of
 %         the cost function with respect to Theta1 and Theta2 in Theta1_grad and
