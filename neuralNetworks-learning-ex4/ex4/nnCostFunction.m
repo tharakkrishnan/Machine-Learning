@@ -30,6 +30,13 @@ J = 0;
 Theta1_grad = zeros(size(Theta1));
 Theta2_grad = zeros(size(Theta2));
 
+% y is of size 5000 x 1
+% Y is of size 5000 x 10
+Y = zeros(size(y(:,1)), max(y));
+for i = 1:size(y(:,1))
+    Y(i,y(i))=1;
+end
+
 % ====================== YOUR CODE HERE ======================
 % Instructions: You should complete the code by working through the
 %               following parts.
@@ -41,41 +48,36 @@ Theta2_grad = zeros(size(Theta2));
 %
 % Add the bias elements in input need to be added
 
-A1 = resize(X,m,n+1);
-A1 = circshift(A1,[0,1]);
-A1(:,1) = 1;
+Xb = resize(X,m,n+1);
+Xb = circshift(Xb,[0,1]);
+Xb(:,1) = 1;
 
-% A1 has size 5000 x 401
-% Theta1 has size 25 x 401
-% Theta2 has size 10 x 26
+for t=1:m
+    a1 = Xb(t,:);
+    
+    % Hidden Layer 1
+    a2=sigmoid(a1 * Theta1'); 
+    a2 = resize(a2,size(a2, 1),size(a2, 2)+1);
+    a2 = circshift(a2,[0,1]);
+    a2(:,1) = 1;
+    
+    % Output Layer
+    a3 = sigmoid(a2* Theta2');
+    h  = a3;
 
-%Compute layer 1 size 5000 x 25
-A2 = sigmoid(A1 * Theta1');
-A2 = resize(A2,size(A2, 1),size(A2, 2)+1);
-A2 = circshift(A2,[0,1]);
-A2(:,1) = 1;
+    %Compute cost J
+    j = (-1) * Y(t,:) .* log(h) - (1 - Y(t,:)) .* log(1 - h);
+    jk = j * ones(num_labels,1);
 
-%Compute layer 2 size 5000 x 10
-H = sigmoid(A2* Theta2');
-
-% y is of size 5000 x 1
-% Y is of size 5000 x 10
-Y = zeros(size(y(:,1)), max(y));
-for i = 1:size(y(:,1))
-    Y(i,y(i))=1;
+    J +=jk;
 end
 
-%Compute cost J
-% j is of size 5000 x 10  
-j = (-1) * Y .* log(H) - (ones(size(Y)) - Y) .* log(ones(size(H)) - H);
-jk = j * ones(num_labels,1);
-
-J =( ones(1,m) * jk)/m;
+J = J/m;
 
 %Compute regularization factor
 r = (sum(sum(Theta1(:,2:size(Theta1,2)) .* Theta1(:,2:size(Theta1,2))))  + sum(sum(Theta2(:,2:size(Theta2,2)) .* Theta2(:,2:size(Theta2,2)))))*lambda/(2*m);
+J = J+r;
 
-J = J+r
 %============================================================
 % Part 2: Implement the backpropagation algorithm to compute the gradients
 %         Theta1_grad and Theta2_grad. You should return the partial derivatives of
@@ -91,7 +93,29 @@ J = J+r
 %         Hint: We recommend implementing backpropagation using a for-loop
 %               over the training examples if you are implementing it for the 
 %               first time.
-%
+for t=1:m
+    a1 = Xb(t,:);
+    %1. Feedforward part 
+    % Hidden Layer 1
+    a2=sigmoid(a1 * Theta1'); 
+    a2 = resize(a2,size(a2, 1),size(a2, 2)+1);
+    a2 = circshift(a2,[0,1]);
+    a2(:,1) = 1;
+    
+    % Output Layer
+    a3 = sigmoid(a2* Theta2');
+    h  = a3;
+    %2. Error calculation 
+    d3 = a3-Y(t,:);
+    d2 = (d3*Theta2) .* a2.*(1-a2);
+ 
+    Theta1_grad += (a1'*d2(2:end))';  
+    Theta2_grad += (a2'*d3)';     
+end
+
+Theta1_grad /=m;  
+Theta2_grad /=m;
+
 % Part 3: Implement regularization with the cost function and gradients.
 %
 %         Hint: You can implement this around the code for
@@ -100,6 +124,8 @@ J = J+r
 %               and Theta2_grad from Part 2.
 %
 
+Theta1_grad(:,2:end) += Theta1(:,2:end)*lambda/m;
+Theta2_grad(:,2:end) += Theta2(:,2:end)*lambda/m;
 
 
 
